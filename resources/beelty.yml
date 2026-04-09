@@ -1,0 +1,5 @@
+entity-ai: false
+redstone:
+  status: false
+  piston-movement: false
+  observer-block-update: false

@@ -121,8 +121,10 @@ class Squid extends WaterAnimal{
 	}
 
 	public function getDrops() : array{
+		$looting = $this->getLootingLevelForDrops();
+
 		return [
-			VanillaItems::INK_SAC()->setCount(mt_rand(1, 3))
+			VanillaItems::INK_SAC()->setCount(mt_rand(1, 3 + $looting))
 		];
 	}
 

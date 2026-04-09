@@ -24,6 +24,7 @@ declare(strict_types=1);
 namespace pocketmine\block;
 
 use pocketmine\block\tile\Hopper as TileHopper;
+use pocketmine\block\utils\HopperRuntime;
 use pocketmine\block\utils\PoweredByRedstone;
 use pocketmine\block\utils\PoweredByRedstoneTrait;
 use pocketmine\block\utils\SupportType;
@@ -78,7 +79,16 @@ class Hopper extends Transparent implements PoweredByRedstone{
 	public function place(BlockTransaction $tx, Item $item, Block $blockReplace, Block $blockClicked, int $face, Vector3 $clickVector, ?Player $player = null) : bool{
 		$this->facing = $face === Facing::DOWN ? Facing::DOWN : Facing::opposite($face);
 
-		return parent::place($tx, $item, $blockReplace, $blockClicked, $face, $clickVector, $player);
+		$result = parent::place($tx, $item, $blockReplace, $blockClicked, $face, $clickVector, $player);
+		if($result){
+			$this->scheduleDelayedBlockUpdate(1);
+		}
+
+		return $result;
+	}
+
+	public function onNearbyBlockChange() : void{
+		$this->scheduleDelayedBlockUpdate(1);
 	}
 
 	public function onInteract(Item $item, int $face, Vector3 $clickVector, ?Player $player = null, array &$returnedItems = []) : bool{
@@ -93,8 +103,18 @@ class Hopper extends Transparent implements PoweredByRedstone{
 	}
 
 	public function onScheduledUpdate() : void{
-		//TODO
+		$tile = $this->position->getWorld()->getTile($this->position);
+		if($tile instanceof TileHopper){
+			$tile->onUpdate();
+		}
 	}
 
-	//TODO: redstone logic, sucking logic
+	public function scheduleDelayedBlockUpdate(int $delay) : void{
+		$tile = $this->position->getWorld()->getTile($this->position);
+		if($tile instanceof TileHopper){
+			$tile->scheduleUpdate($delay);
+		}else{
+			HopperRuntime::getInstance()->scheduleDelayedBlockUpdate($this->position->getWorld(), $this->position, $delay);
+		}
+	}
 }

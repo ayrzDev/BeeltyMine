@@ -105,6 +105,7 @@ use pocketmine\item\enchantment\MeleeWeaponEnchantment;
 use pocketmine\item\Item;
 use pocketmine\item\ItemUseResult;
 use pocketmine\item\Releasable;
+use pocketmine\item\Spear;
 use pocketmine\lang\KnownTranslationFactory;
 use pocketmine\lang\Language;
 use pocketmine\lang\Translatable;
@@ -144,7 +145,6 @@ use pocketmine\world\Position;
 use pocketmine\world\sound\EntityAttackNoDamageSound;
 use pocketmine\world\sound\EntityAttackSound;
 use pocketmine\world\sound\FireExtinguishSound;
-use pocketmine\world\sound\ItemBreakSound;
 use pocketmine\world\sound\RespawnAnchorDepleteSound;
 use pocketmine\world\sound\Sound;
 use pocketmine\world\World;
@@ -1661,8 +1661,12 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer, Nev
 				$this->blockBreakHandler = null;
 			}
 
-			if($this->isUsingItem() && $this->getItemUseDuration() % 4 === 0 && ($item = $this->inventory->getItemInHand()) instanceof ConsumableItem){
-				$this->broadcastAnimation(new ConsumingItemAnimation($this, $item));
+			if($this->isUsingItem()){
+				$item = $this->inventory->getItemInHand();
+				if($this->getItemUseDuration() % 4 === 0 && $item instanceof ConsumableItem){
+					$this->broadcastAnimation(new ConsumingItemAnimation($this, $item));
+				}
+				$item->whileUsing($this);
 			}
 		}
 
@@ -1779,7 +1783,7 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer, Nev
 
 			if(!$damagedOrDeducted || $this->hasFiniteResources()){
 				if($newHeldItem instanceof Durable && $newHeldItem->isBroken()){
-					$this->broadcastSound(new ItemBreakSound());
+					$this->broadcastItemBreakSound();
 				}
 				$this->inventory->setItemInHand($newHeldItem);
 				$heldItemChanged = true;
@@ -1817,7 +1821,7 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer, Nev
 		$oldItem = clone $item;
 
 		$ev = new PlayerItemUseEvent($this, $item, $directionVector);
-		if($this->hasItemCooldown($item) || $this->isSpectator()){
+		if(($this->hasItemCooldown($item) && !($item instanceof Spear)) || $this->isSpectator()){
 			$ev->cancel();
 		}
 
@@ -1915,7 +1919,7 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer, Nev
 			$this->getArmorInventory()->setChestplate($chestplate);
 		}
 		if($chestplate->isBroken()){
-			$this->broadcastSound(new ItemBreakSound());
+			$this->broadcastItemBreakSound();
 			$this->toggleGlide(false);
 		}
 	}
@@ -2138,7 +2142,18 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer, Nev
 		$oldItem = clone $heldItem;
 
 		$ev = new EntityDamageByEntityEvent($this, $entity, EntityDamageEvent::CAUSE_ENTITY_ATTACK, $heldItem->getAttackPoints());
-		if(!$this->canInteract($entity->getLocation(), self::MAX_REACH_DISTANCE_ENTITY_INTERACTION)){
+		if($heldItem instanceof Spear){
+			$targetPos = $entity->getPosition()->add(0, $entity->size->getHeight() / 2, 0);
+			if(!$this->canInteract($targetPos, $heldItem->getJabMaxDistance())){
+				$this->logger->debug("Cancelled spear attack of entity " . $entity->getId() . " due to out-of-range interaction");
+				$ev->cancel();
+			}elseif($this->getEyePos()->distance($targetPos) < $heldItem->getJabMinDistance()){
+				$this->logger->debug("Cancelled spear attack of entity " . $entity->getId() . " due to minimum jab distance");
+				$ev->cancel();
+			}elseif($this->isSpectator() || ($entity instanceof Player && !$this->server->getConfigGroup()->getConfigBool(ServerProperties::PVP))){
+				$ev->cancel();
+			}
+		}elseif(!$this->canInteract($entity->getLocation(), self::MAX_REACH_DISTANCE_ENTITY_INTERACTION)){
 			$this->logger->debug("Cancelled attack of entity " . $entity->getId() . " due to not currently being interactable");
 			$ev->cancel();
 		}elseif($this->isSpectator() || ($entity instanceof Player && !$this->server->getConfigGroup()->getConfigBool(ServerProperties::PVP))){
@@ -2157,7 +2172,7 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer, Nev
 		}
 		$ev->setModifier($meleeEnchantmentDamage, EntityDamageEvent::MODIFIER_WEAPON_ENCHANTMENTS);
 
-		if(!$this->isSprinting() && !$this->isFlying() && $this->fallDistance > 0 && !$this->effectManager->has(VanillaEffects::BLINDNESS()) && !$this->isUnderwater()){
+		if(!($heldItem instanceof Spear) && !$this->isSprinting() && !$this->isFlying() && $this->fallDistance > 0 && !$this->effectManager->has(VanillaEffects::BLINDNESS()) && !$this->isUnderwater()){
 			$ev->setModifier($ev->getFinalDamage() / 2, EntityDamageEvent::MODIFIER_CRITICAL);
 		}
 
@@ -2169,7 +2184,7 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer, Nev
 			$this->getWorld()->addSound($soundPos, new EntityAttackNoDamageSound());
 			return false;
 		}
-		$this->getWorld()->addSound($soundPos, new EntityAttackSound());
+		$this->getWorld()->addSound($soundPos, $heldItem instanceof Spear ? $heldItem->getAttackHitSound() : new EntityAttackSound());
 
 		if($ev->getModifier(EntityDamageEvent::MODIFIER_CRITICAL) > 0 && $entity instanceof Living){
 			$entity->broadcastAnimation(new CriticalHitAnimation($entity));
@@ -2229,7 +2244,7 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer, Nev
 			if($item->onInteractEntity($this, $entity, $clickPos)){
 				if($this->hasFiniteResources() && !$item->equalsExact($oldItem) && $oldItem->equalsExact($this->inventory->getItemInHand())){
 					if($item instanceof Durable && $item->isBroken()){
-						$this->broadcastSound(new ItemBreakSound());
+						$this->broadcastItemBreakSound();
 					}
 					$this->inventory->setItemInHand($item);
 				}

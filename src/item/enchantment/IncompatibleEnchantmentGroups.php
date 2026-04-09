@@ -31,4 +31,5 @@ final class IncompatibleEnchantmentGroups{
 	public const PROTECTION = "protection";
 	public const BOW_INFINITE = "bow_infinite";
 	public const BLOCK_DROPS = "block_drops";
+	public const WEAPON_DAMAGE = "weapon_damage";
 }

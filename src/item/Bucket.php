@@ -26,6 +26,7 @@ namespace pocketmine\item;
 use pocketmine\block\Block;
 use pocketmine\block\BlockTypeIds;
 use pocketmine\block\Liquid;
+use pocketmine\block\PowderSnow;
 use pocketmine\block\VanillaBlocks;
 use pocketmine\event\player\PlayerBucketFillEvent;
 use pocketmine\math\Vector3;
@@ -38,6 +39,20 @@ class Bucket extends Item{
 	}
 
 	public function onInteractBlock(Player $player, Block $blockReplace, Block $blockClicked, int $face, Vector3 $clickVector, array &$returnedItems) : ItemUseResult{
+		if($blockClicked instanceof PowderSnow){
+			$ev = new PlayerBucketFillEvent($player, $blockReplace, $face, $this, VanillaItems::POWDER_SNOW_BUCKET());
+			$ev->call();
+			if(!$ev->isCancelled()){
+				$player->getWorld()->setBlock($blockClicked->getPosition(), VanillaBlocks::AIR());
+
+				$this->pop();
+				$returnedItems[] = $ev->getItem();
+				return ItemUseResult::SUCCESS;
+			}
+
+			return ItemUseResult::FAIL;
+		}
+
 		//TODO: move this to generic placement logic
 		if($blockClicked instanceof Liquid && $blockClicked->isSource()){
 			$stack = clone $this;

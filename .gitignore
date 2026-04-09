@@ -92,3 +92,4 @@ Documentation/*
 /tests/
 
 /virions/
+.github/copilot-instructions.md

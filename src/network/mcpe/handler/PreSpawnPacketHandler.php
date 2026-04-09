@@ -25,6 +25,7 @@ namespace pocketmine\network\mcpe\handler;
 
 use function array_map;
 use pocketmine\nbt\tag\CompoundTag;
+use pocketmine\nbt\tag\ListTag;
 use pocketmine\network\mcpe\cache\CraftingDataCache;
 use pocketmine\network\mcpe\cache\StaticPacketCache;
 use pocketmine\network\mcpe\InventoryManager;
@@ -34,6 +35,7 @@ use pocketmine\network\mcpe\protocol\PlayerAuthInputPacket;
 use pocketmine\network\mcpe\protocol\RequestChunkRadiusPacket;
 use pocketmine\network\mcpe\protocol\ServerboundLoadingScreenPacket;
 use pocketmine\network\mcpe\protocol\StartGamePacket;
+use pocketmine\network\mcpe\protocol\SyncActorPropertyPacket;
 use pocketmine\network\mcpe\protocol\TrimDataPacket;
 use pocketmine\network\mcpe\protocol\types\BlockPosition;
 use pocketmine\network\mcpe\protocol\types\BoolGameRule;
@@ -133,6 +135,17 @@ class PreSpawnPacketHandler extends PacketHandler{
 
 			$this->session->getLogger()->debug("Sending actor identifiers");
 			$this->session->sendDataPacket(StaticPacketCache::getInstance()->getAvailableActorIdentifiers());
+
+			$this->session->getLogger()->debug("Sending entity properties");
+			$beePropertyTag = CompoundTag::create()
+				->setString("type", "minecraft:bee")
+				->setTag("properties", new ListTag([
+					CompoundTag::create()
+						->setString("name", "minecraft:has_nectar")
+						->setInt("type", 2)
+						->setByte("clientSync", 1)
+				]));
+			$this->session->sendDataPacket(SyncActorPropertyPacket::create(new CacheableNbt($beePropertyTag)));
 
 			$this->session->getLogger()->debug("Sending biome definitions");
 			$this->session->sendDataPacket(StaticPacketCache::getInstance()->getBiomeDefs());

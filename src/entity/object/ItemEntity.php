@@ -23,6 +23,9 @@ declare(strict_types=1);
 
 namespace pocketmine\entity\object;
 
+use pocketmine\block\Hopper as HopperBlock;
+use pocketmine\block\utils\HopperDataStore;
+use pocketmine\block\utils\HopperRuntime;
 use pocketmine\entity\animation\ItemEntityStackSizeChangeAnimation;
 use pocketmine\entity\Entity;
 use pocketmine\entity\EntitySizeInfo;
@@ -41,7 +44,11 @@ use pocketmine\network\mcpe\protocol\types\entity\EntityIds;
 use pocketmine\network\mcpe\protocol\types\inventory\ItemStackWrapper;
 use pocketmine\player\Player;
 use pocketmine\timings\Timings;
+use pocketmine\world\Position;
+use pocketmine\world\World;
+use function abs;
 use function max;
+use function min;
 
 class ItemEntity extends Entity{
 
@@ -58,12 +65,24 @@ class ItemEntity extends Entity{
 	public const DEFAULT_DESPAWN_DELAY = 6000; //5 minutes
 	public const NEVER_DESPAWN = -1;
 	public const MAX_DESPAWN_DELAY = 32767 + self::DEFAULT_DESPAWN_DELAY; //max value storable by mojang NBT :(
+	private const MAX_PICKUP_HEIGHT = 3;
+	private const STILL_TICKS_THRESHOLD = 5;
+	private const MOTION_EPSILON = 0.003;
+
+	/** @var array<int, array<int, self>> */
+	private static array $entitiesByWorld = [];
+	/** @var array<int, array<string, int|null>> */
+	private static array $columnHopperCache = [];
 
 	protected string $owner = "";
 	protected string $thrower = "";
 	protected int $pickupDelay = 0;
 	protected int $despawnDelay = self::DEFAULT_DESPAWN_DELAY;
 	protected Item $item;
+	private int $stillTicks = 0;
+	private bool $motionFrozen = false;
+	private ?Position $assignedHopper = null;
+	private bool $initialRefreshDone = false;
 
 	public function __construct(Location $location, Item $item, ?CompoundTag $nbt = null){
 		if($item->isNull()){
@@ -71,6 +90,7 @@ class ItemEntity extends Entity{
 		}
 		$this->item = clone $item;
 		parent::__construct($location, $nbt);
+		self::registerEntity($this);
 	}
 
 	protected function getInitialSizeInfo() : EntitySizeInfo{ return new EntitySizeInfo(0.25, 0.25); }
@@ -91,6 +111,10 @@ class ItemEntity extends Entity{
 		}else{
 			$this->despawnDelay = max(0, self::DEFAULT_DESPAWN_DELAY - $age);
 		}
+		$configuredDespawnDelay = HopperRuntime::getInstance()->getItemDespawnTicks($this->server);
+		if($configuredDespawnDelay > 0 && $this->despawnDelay !== self::NEVER_DESPAWN){
+			$this->despawnDelay = min($this->despawnDelay, $configuredDespawnDelay);
+		}
 		$this->pickupDelay = $nbt->getShort(self::TAG_PICKUP_DELAY, $this->pickupDelay);
 		$this->owner = $nbt->getString(self::TAG_OWNER, $this->owner);
 		$this->thrower = $nbt->getString(self::TAG_THROWER, $this->thrower);
@@ -99,6 +123,70 @@ class ItemEntity extends Entity{
 	protected function onFirstUpdate(int $currentTick) : void{
 		(new ItemSpawnEvent($this))->call(); //this must be called before EntitySpawnEvent, to maintain backwards compatibility
 		parent::onFirstUpdate($currentTick);
+	}
+
+	public function onUpdate(int $currentTick) : bool{
+		if(!$this->initialRefreshDone){
+			$this->initialRefreshDone = true;
+			$this->refreshAssignedHopper();
+		}
+
+		if(!$this->isFlaggedForDespawn() && !$this->closed){
+			if($this->motionFrozen){
+				$motion = $this->getMotion();
+				if($this->onGround){
+					$this->motion = new Vector3(0.0, 0.0, 0.0);
+				}elseif($motion->y > 0.05){
+					$this->motion = new Vector3($motion->x * 0.1, 0.05, $motion->z * 0.1);
+				}
+			}else{
+				$motion = $this->getMotion();
+				if(
+					$this->onGround &&
+					abs($motion->x) < self::MOTION_EPSILON &&
+					abs($motion->y) < self::MOTION_EPSILON &&
+					abs($motion->z) < self::MOTION_EPSILON
+				){
+					if(++$this->stillTicks >= self::STILL_TICKS_THRESHOLD){
+						$this->motion = new Vector3(0.0, 0.0, 0.0);
+						$this->motionFrozen = true;
+					}
+				}else{
+					$this->stillTicks = 0;
+				}
+			}
+		}
+
+		return parent::onUpdate($currentTick);
+	}
+
+	public function setMotion(Vector3 $motion) : bool{
+		$updated = parent::setMotion($motion);
+		if($updated && $motion->lengthSquared() > 0.0){
+			$this->unfreezeMotion();
+		}
+
+		return $updated;
+	}
+
+	protected function move(float $dx, float $dy, float $dz) : void{
+		$previousWorld = $this->location->world;
+		$previousFloorX = $this->location->getFloorX();
+		$previousFloorY = $this->location->getFloorY();
+		$previousFloorZ = $this->location->getFloorZ();
+
+		parent::move($dx, $dy, $dz);
+
+		if(
+			$this->location->world === $previousWorld &&
+			$this->location->getFloorX() === $previousFloorX &&
+			$this->location->getFloorY() === $previousFloorY &&
+			$this->location->getFloorZ() === $previousFloorZ
+		){
+			return;
+		}
+
+		$this->refreshAssignedHopper();
 	}
 
 	protected function entityBaseTick(int $tickDiff = 1) : bool{
@@ -237,6 +325,25 @@ class ItemEntity extends Entity{
 		return $this->item;
 	}
 
+	public function setItem(Item $item) : void{
+		if($item->isNull()){
+			$this->flagForDespawn();
+			return;
+		}
+
+		if($this->item->canStackWith($item)){
+			if($this->item->getCount() !== $item->getCount()){
+				$this->setStackSize($item->getCount());
+			}
+			return;
+		}
+
+		$this->unfreezeMotion();
+		$this->item = clone $item;
+		$this->despawnFromAll();
+		$this->spawnToAll();
+	}
+
 	public function isFireProof() : bool{
 		return $this->item->isFireProof();
 	}
@@ -288,6 +395,39 @@ class ItemEntity extends Entity{
 
 	public function setThrower(string $thrower) : void{
 		$this->thrower = $thrower;
+	}
+
+	protected function setPosition(Vector3 $pos) : bool{
+		$oldWorld = $this->getWorld();
+		$oldFloorX = $this->location->getFloorX();
+		$oldFloorY = $this->location->getFloorY();
+		$oldFloorZ = $this->location->getFloorZ();
+		$moved = parent::setPosition($pos);
+		if(!$moved){
+			return false;
+		}
+
+		if($oldWorld !== $this->getWorld()){
+			self::unregisterEntity($this, $oldWorld);
+			self::registerEntity($this);
+		}
+
+		if(
+			$oldWorld !== $this->getWorld() ||
+			$oldFloorX !== $this->location->getFloorX() ||
+			$oldFloorY !== $this->location->getFloorY() ||
+			$oldFloorZ !== $this->location->getFloorZ()
+		){
+			$this->refreshAssignedHopper();
+		}
+
+		return true;
+	}
+
+	protected function onDispose() : void{
+		$this->clearAssignedHopper();
+		self::unregisterEntity($this);
+		parent::onDispose();
 	}
 
 	protected function sendSpawnPacket(Player $player) : void{
@@ -349,5 +489,116 @@ class ItemEntity extends Entity{
 			}
 		}
 		$this->flagForDespawn();
+	}
+
+	/**
+	 * @return array<int, array<int, self>>
+	 */
+	public static function getOverflowWorlds(int $limit) : array{
+		if($limit <= 0){
+			return [];
+		}
+
+		$overflow = [];
+		foreach(self::$entitiesByWorld as $worldId => $entities){
+			if(count($entities) > $limit){
+				$overflow[$worldId] = $entities;
+			}
+		}
+
+		return $overflow;
+	}
+
+	public static function removeWorld(World $world) : void{
+		unset(self::$entitiesByWorld[$world->getId()]);
+	}
+
+	public static function clearColumnCacheForWorld(World $world) : void{
+		unset(self::$columnHopperCache[$world->getId()]);
+	}
+
+	private static function registerEntity(self $entity) : void{
+		if($entity->closed || $entity->isFlaggedForDespawn()){
+			return;
+		}
+
+		self::$entitiesByWorld[$entity->getWorld()->getId()][$entity->getId()] = $entity;
+	}
+
+	private static function unregisterEntity(self $entity, ?World $world = null) : void{
+		$world ??= $entity->getWorld();
+		$worldId = $world->getId();
+
+		unset(self::$entitiesByWorld[$worldId][$entity->getId()]);
+		if((self::$entitiesByWorld[$worldId] ?? []) === []){
+			unset(self::$entitiesByWorld[$worldId]);
+		}
+	}
+
+	private function unfreezeMotion() : void{
+		$this->stillTicks = 0;
+		$this->motionFrozen = false;
+	}
+
+	private function refreshAssignedHopper() : bool{
+		$world = $this->location->getWorld();
+		$floorX = $this->location->getFloorX();
+		$floorY = $this->location->getFloorY();
+		$floorZ = $this->location->getFloorZ();
+
+		$cachedY = self::$columnHopperCache[$world->getId()][$this->getColumnCacheKey($floorX, $floorZ)] ?? null;
+		if($cachedY !== null && $cachedY <= $floorY && $cachedY >= $floorY - self::MAX_PICKUP_HEIGHT){
+			$cachedBlock = $world->getBlockAt($floorX, $cachedY, $floorZ);
+			if($cachedBlock instanceof HopperBlock){
+				$cachedBlock->scheduleDelayedBlockUpdate(0);
+				$this->assignToHopper($cachedBlock->getPosition());
+				return true;
+			}
+		}
+
+		for($dy = 0; $dy <= self::MAX_PICKUP_HEIGHT; ++$dy){
+			$block = $world->getBlockAt($floorX, $floorY - $dy, $floorZ);
+			if($block instanceof HopperBlock){
+				self::$columnHopperCache[$world->getId()][$this->getColumnCacheKey($floorX, $floorZ)] = $floorY - $dy;
+				$block->scheduleDelayedBlockUpdate(0);
+				$this->assignToHopper($block->getPosition());
+				return true;
+			}
+		}
+
+		self::$columnHopperCache[$world->getId()][$this->getColumnCacheKey($floorX, $floorZ)] = null;
+		$this->clearAssignedHopper();
+		return false;
+	}
+
+	private function assignToHopper(Position $position) : void{
+		if($this->assignedHopper !== null && $this->isSamePosition($this->assignedHopper, $position)){
+			HopperDataStore::getInstance()->assignEntity($position, $this);
+			return;
+		}
+
+		$this->clearAssignedHopper();
+		$this->assignedHopper = Position::fromObject($position, $position->getWorld());
+		HopperDataStore::getInstance()->assignEntity($position, $this);
+	}
+
+	private function clearAssignedHopper() : void{
+		if($this->assignedHopper === null){
+			return;
+		}
+
+		HopperDataStore::getInstance()->unassignEntity($this->assignedHopper, $this);
+		$this->assignedHopper = null;
+	}
+
+	private function isSamePosition(Position $left, Position $right) : bool{
+		return $left->getWorld() === $right->getWorld()
+			&& $left->getFloorX() === $right->getFloorX()
+			&& $left->getFloorY() === $right->getFloorY()
+			&& $left->getFloorZ() === $right->getFloorZ();
+	}
+
+	private function getColumnCacheKey(int $x, int $z) : string{
+		return $x . ":" . $z;
 	}
 }

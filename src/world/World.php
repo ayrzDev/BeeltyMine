@@ -30,6 +30,7 @@ use pocketmine\block\Air;
 use pocketmine\block\Block;
 use pocketmine\block\BlockTypeIds;
 use pocketmine\block\RuntimeBlockStateRegistry;
+use pocketmine\block\utils\HopperDataStore;
 use pocketmine\block\tile\Spawnable;
 use pocketmine\block\tile\Tile;
 use pocketmine\block\tile\TileFactory;
@@ -3142,6 +3143,8 @@ class World implements ChunkManager{
 					return false;
 				}
 			}
+
+			HopperDataStore::getInstance()->removeChunk($this, $x, $z);
 
 			if($trySave && $this->getAutoSave()){
 				$this->timings->syncChunkSave->startTiming();

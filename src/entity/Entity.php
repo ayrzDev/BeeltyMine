@@ -169,6 +169,7 @@ abstract class Entity{
 	protected TimingsHandler $timings;
 
 	protected bool $networkPropertiesDirty = false;
+	protected bool $entityPropertiesDirty = false;
 
 	protected string $nameTag = "";
 	protected bool $nameTagVisible = true;
@@ -652,6 +653,10 @@ abstract class Entity{
 		if(count($changedProperties) > 0){
 			$this->sendData(null, $changedProperties);
 			$this->networkProperties->clearDirtyProperties();
+			$this->entityPropertiesDirty = false;
+		}elseif($this->entityPropertiesDirty){
+			$this->sendData(null, []);
+			$this->entityPropertiesDirty = false;
 		}
 
 		$hasUpdate = false;
@@ -1510,6 +1515,10 @@ abstract class Entity{
 
 	abstract public static function getNetworkTypeId() : string;
 
+	public function getPropertySyncData() : PropertySyncData{
+		return new PropertySyncData([], []);
+	}
+
 	/**
 	 * Called by spawnTo() to send whatever packets needed to spawn the entity to the client.
 	 */
@@ -1528,7 +1537,7 @@ abstract class Entity{
 				return new NetworkAttribute($attr->getId(), $attr->getMinValue(), $attr->getMaxValue(), $attr->getValue(), $attr->getDefaultValue(), []);
 			}, $this->attributeMap->getAll()),
 			$this->getAllNetworkData(),
-			new PropertySyncData([], []),
+			$this->getPropertySyncData(),
 			[] //TODO: entity links
 		));
 	}

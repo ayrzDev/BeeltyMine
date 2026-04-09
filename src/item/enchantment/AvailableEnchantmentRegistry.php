@@ -59,9 +59,13 @@ final class AvailableEnchantmentRegistry{
 		$this->register(Enchantments::RESPIRATION(), [Tags::HELMET], []);
 		$this->register(Enchantments::AQUA_AFFINITY(), [Tags::HELMET], []);
 		$this->register(Enchantments::FROST_WALKER(), [/* no primary items */], [Tags::BOOTS]);
-		$this->register(Enchantments::SHARPNESS(), [Tags::SWORD, Tags::AXE], []);
-		$this->register(Enchantments::KNOCKBACK(), [Tags::SWORD], []);
-		$this->register(Enchantments::FIRE_ASPECT(), [Tags::SWORD], []);
+		$this->register(Enchantments::SHARPNESS(), [Tags::SWORD, Tags::SPEAR, Tags::AXE], []);
+		$this->register(Enchantments::SMITE(), [Tags::SWORD, Tags::SPEAR], []);
+		$this->register(Enchantments::BANE_OF_ARTHROPODS(), [Tags::SWORD, Tags::SPEAR], []);
+		$this->register(Enchantments::KNOCKBACK(), [Tags::SWORD, Tags::SPEAR], []);
+		$this->register(Enchantments::FIRE_ASPECT(), [Tags::SWORD, Tags::SPEAR], []);
+		$this->register(Enchantments::LOOTING(), [Tags::SWORD, Tags::SPEAR], []);
+		$this->register(Enchantments::LUNGE(), [Tags::SPEAR], []);
 		$this->register(Enchantments::EFFICIENCY(), [Tags::BLOCK_TOOLS], [Tags::SHEARS]);
 		$this->register(Enchantments::FORTUNE(), [Tags::BLOCK_TOOLS], []);
 		$this->register(Enchantments::SILK_TOUCH(), [Tags::BLOCK_TOOLS], [Tags::SHEARS]);

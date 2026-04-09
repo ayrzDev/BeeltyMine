@@ -2,27 +2,29 @@
 
 /*
  *
- *  ____            _        _   __  __ _                  __  __ ____
- * |  _ \ ___   ___| | _____| |_|  \/  (_)_ __   ___      |  \/  |  _ \
- * | |_) / _ \ / __| |/ / _ \ __| |\/| | | '_ \ / _ \_____| |\/| | |_) |
- * |  __/ (_) | (__|   <  __/ |_| |  | | | | | |  __/_____| |  | |  __/
- * |_|   \___/ \___|_|\_\___|\__|_|  |_|_|_| |_|\___|     |_|  |_|_|
+ *     ____            ____        __  ____
+ *    / __ )___  ___  / / /___  __/  |/  (_)___  ___
+ *   / __  / _ \/ _ \/ / __/ / / / /|_/ / / __ \/ _ \
+ *  / /_/ /  __/  __/ / /_/ /_/ / /  / / / / / /  __/
+ * /_____/\___/\___/_/\__/\__, /_/  /_/_/_/ /_/\___/
+ *                       /____/
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * @author PocketMine Team
- * @link http://www.pocketmine.net/
- *
- *
+ * @author Ayrz
+ * @team BeeltyMine
+ * 
+ * 
  */
 
 declare(strict_types=1);
 
 namespace pocketmine\inventory;
 
+use pocketmine\item\InventoryAwareItem;
 use pocketmine\item\Item;
 use pocketmine\item\VanillaItems;
 use pocketmine\player\Player;
@@ -68,6 +70,10 @@ abstract class BaseInventory implements Inventory, SlotValidatedInventory{
 	}
 
 	abstract protected function internalSetItem(int $index, Item $item) : void;
+
+	public function getUnclonedItem(int $index) : Item{
+		return $this->getItem($index);
+	}
 
 	public function setItem(int $index, Item $item) : void{
 		if($item->isNull()){
@@ -366,7 +372,16 @@ abstract class BaseInventory implements Inventory, SlotValidatedInventory{
 		unset($this->viewers[spl_object_id($who)]);
 	}
 
+	protected function shouldCallInventoryAwareItemHooks() : bool{
+		return true;
+	}
+
 	protected function onSlotChange(int $index, Item $before) : void{
+		$item = $this->getUnclonedItem($index);
+		if($this->shouldCallInventoryAwareItemHooks() && $item instanceof InventoryAwareItem){
+			$item->onInventoryChange($this);
+		}
+
 		foreach($this->listeners as $listener){
 			$listener->onSlotChange($this, $index, $before);
 		}

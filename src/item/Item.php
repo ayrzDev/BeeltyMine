@@ -613,6 +613,13 @@ class Item implements \JsonSerializable{
 	}
 
 	/**
+	 * Called every tick while the player is using this item.
+	 */
+	public function whileUsing(Player $player) : void{
+		//NOOP
+	}
+
+	/**
 	 * Called when a player is using this item and releases it. Used to handle bow shoot actions.
 	 * Returns whether the item was changed, for example count decrease or durability change.
 	 *

@@ -2,21 +2,22 @@
 
 /*
  *
- *  ____            _        _   __  __ _                  __  __ ____
- * |  _ \ ___   ___| | _____| |_|  \/  (_)_ __   ___      |  \/  |  _ \
- * | |_) / _ \ / __| |/ / _ \ __| |\/| | | '_ \ / _ \_____| |\/| | |_) |
- * |  __/ (_) | (__|   <  __/ |_| |  | | | | | |  __/_____| |  | |  __/
- * |_|   \___/ \___|_|\_\___|\__|_|  |_|_|_| |_|\___|     |_|  |_|_|
+ *     ____            ____        __  ____
+ *    / __ )___  ___  / / /___  __/  |/  (_)___  ___
+ *   / __  / _ \/ _ \/ / __/ / / / /|_/ / / __ \/ _ \
+ *  / /_/ /  __/  __/ / /_/ /_/ / /  / / / / / /  __/
+ * /_____/\___/\___/_/\__/\__, /_/  /_/_/_/ /_/\___/
+ *                       /____/
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * @author PocketMine Team
- * @link http://www.pocketmine.net/
- *
- *
+ * @author Ayrz
+ * @team BeeltyMine
+ * 
+ * 
  */
 
 declare(strict_types=1);
@@ -25,6 +26,7 @@ namespace pocketmine\item;
 
 use pocketmine\block\utils\RecordType;
 use pocketmine\block\VanillaBlocks as Blocks;
+use pocketmine\entity\Bee;
 use pocketmine\entity\Entity;
 use pocketmine\entity\Location;
 use pocketmine\entity\Squid;
@@ -122,6 +124,23 @@ final class VanillaItemsInputs extends RegistrySource{
 		self::register("bread", fn(IID $id) => new Bread($id, "Bread"));
 		self::register("brick", fn(IID $id) => new Item($id, "Brick"));
 		self::register("bucket", fn(IID $id) => new Bucket($id, "Bucket"));
+		self::register("bundle", fn(IID $id) => new Bundle($id, "Bundle"));
+		self::register("white_bundle", fn(IID $id) => new Bundle($id, "White Bundle"));
+		self::register("light_gray_bundle", fn(IID $id) => new Bundle($id, "Light Gray Bundle"));
+		self::register("gray_bundle", fn(IID $id) => new Bundle($id, "Gray Bundle"));
+		self::register("black_bundle", fn(IID $id) => new Bundle($id, "Black Bundle"));
+		self::register("brown_bundle", fn(IID $id) => new Bundle($id, "Brown Bundle"));
+		self::register("red_bundle", fn(IID $id) => new Bundle($id, "Red Bundle"));
+		self::register("orange_bundle", fn(IID $id) => new Bundle($id, "Orange Bundle"));
+		self::register("yellow_bundle", fn(IID $id) => new Bundle($id, "Yellow Bundle"));
+		self::register("lime_bundle", fn(IID $id) => new Bundle($id, "Lime Bundle"));
+		self::register("green_bundle", fn(IID $id) => new Bundle($id, "Green Bundle"));
+		self::register("cyan_bundle", fn(IID $id) => new Bundle($id, "Cyan Bundle"));
+		self::register("light_blue_bundle", fn(IID $id) => new Bundle($id, "Light Blue Bundle"));
+		self::register("blue_bundle", fn(IID $id) => new Bundle($id, "Blue Bundle"));
+		self::register("purple_bundle", fn(IID $id) => new Bundle($id, "Purple Bundle"));
+		self::register("magenta_bundle", fn(IID $id) => new Bundle($id, "Magenta Bundle"));
+		self::register("pink_bundle", fn(IID $id) => new Bundle($id, "Pink Bundle"));
 		self::register("carrot", fn(IID $id) => new Carrot($id, "Carrot"));
 		self::register("charcoal", fn(IID $id) => new Coal($id, "Charcoal"));
 		self::registerDelayed("cherry_sign", fn(string $name) : ItemBlockWallOrFloor => new ItemBlockWallOrFloor(self::makeIID($name), Blocks::CHERRY_SIGN(), Blocks::CHERRY_WALL_SIGN()));
@@ -265,6 +284,7 @@ final class VanillaItemsInputs extends RegistrySource{
 		self::register("popped_chorus_fruit", fn(IID $id) => new Item($id, "Popped Chorus Fruit"));
 		self::register("potato", fn(IID $id) => new Potato($id, "Potato"));
 		self::register("potion", fn(IID $id) => new Potion($id, "Potion"));
+		self::register("powder_snow_bucket", fn(IID $id) => new PowderSnowBucket($id, "Powder Snow Bucket"));
 		self::register("prismarine_crystals", fn(IID $id) => new Item($id, "Prismarine Crystals"));
 		self::register("prismarine_shard", fn(IID $id) => new Item($id, "Prismarine Shard"));
 		self::register("pufferfish", fn(IID $id) => new Pufferfish($id, "Pufferfish"));
@@ -346,6 +366,11 @@ final class VanillaItemsInputs extends RegistrySource{
 				return new Zombie(Location::fromObject($pos, $world, $yaw, $pitch));
 			}
 		});
+		self::register("bee_spawn_egg", fn(IID $id) => new class($id, "Bee Spawn Egg") extends SpawnEgg{
+			protected function createEntity(World $world, Vector3 $pos, float $yaw, float $pitch) : Entity{
+				return new Bee(Location::fromObject($pos, $world, $yaw, $pitch));
+			}
+		});
 		self::register("squid_spawn_egg", fn(IID $id) => new class($id, "Squid Spawn Egg") extends SpawnEgg{
 			protected function createEntity(World $world, Vector3 $pos, float $yaw, float $pitch) : Entity{
 				return new Squid(Location::fromObject($pos, $world, $yaw, $pitch));
@@ -373,6 +398,7 @@ final class VanillaItemsInputs extends RegistrySource{
 			self::register($idPrefix . "_pickaxe", fn(IID $id) => new Pickaxe($id, $namePrefix . " Pickaxe", $tier, [EnchantmentTags::PICKAXE]));
 			self::register($idPrefix . "_shovel", fn(IID $id) => new Shovel($id, $namePrefix . " Shovel", $tier, [EnchantmentTags::SHOVEL]));
 			self::register($idPrefix . "_sword", fn(IID $id) => new Sword($id, $namePrefix . " Sword", $tier, [EnchantmentTags::SWORD]));
+			self::register($idPrefix . "_spear", fn(IID $id) => new Spear($id, $namePrefix . " Spear", $tier, [EnchantmentTags::SPEAR]));
 		}
 	}
 

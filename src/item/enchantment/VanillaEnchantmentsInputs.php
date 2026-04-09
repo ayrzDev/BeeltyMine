@@ -1,22 +1,22 @@
 <?php
 
 /*
- *
- *  ____            _        _   __  __ _                  __  __ ____
- * |  _ \ ___   ___| | _____| |_|  \/  (_)_ __   ___      |  \/  |  _ \
- * | |_) / _ \ / __| |/ / _ \ __| |\/| | | '_ \ / _ \_____| |\/| | |_) |
- * |  __/ (_) | (__|   <  __/ |_| |  | | | | | |  __/_____| |  | |  __/
- * |_|   \___/ \___|_|\_\___|\__|_|  |_|_|_| |_|\___|     |_|  |_|_|
+ *     ____            ____        __  ____
+ *    / __ )___  ___  / / /___  __/  |/  (_)___  ___
+ *   / __  / _ \/ _ \/ / __/ / / / /|_/ / / __ \/ _ \
+ *  / /_/ /  __/  __/ / /_/ /_/ / /  / / / / / /  __/
+ * /_____/\___/\___/_/\__/\__, /_/  /_/_/_/ /_/\___/
+ *                       /____/
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * @author PocketMine Team
- * @link http://www.pocketmine.net/
- *
- *
+ * @author Ayrz
+ * @team BeeltyMine
+ * 
+ * 
  */
 
 declare(strict_types=1);
@@ -155,6 +155,24 @@ final class VanillaEnchantmentsInputs extends RegistrySource{
 			fn(int $level) : int => 11 * ($level - 1) + 1,
 			20
 		));
+		self::register("SMITE", new SmiteEnchantment(
+			KnownTranslationFactory::enchantment_damage_undead(),
+			Rarity::UNCOMMON,
+			0,
+			0,
+			5,
+			fn(int $level) : int => 8 * ($level - 1) + 5,
+			20
+		));
+		self::register("BANE_OF_ARTHROPODS", new BaneOfArthropodsEnchantment(
+			KnownTranslationFactory::enchantment_damage_arthropods(),
+			Rarity::UNCOMMON,
+			0,
+			0,
+			5,
+			fn(int $level) : int => 8 * ($level - 1) + 5,
+			20
+		));
 		self::register("KNOCKBACK", new KnockbackEnchantment(
 			KnownTranslationFactory::enchantment_knockback(),
 			Rarity::UNCOMMON,
@@ -173,7 +191,24 @@ final class VanillaEnchantmentsInputs extends RegistrySource{
 			fn(int $level) : int => 20 * ($level - 1) + 10,
 			50
 		));
-		//TODO: smite, bane of arthropods, looting (these don't make sense now because their applicable mobs don't exist yet)
+		self::register("LOOTING", new Enchantment(
+			KnownTranslationFactory::enchantment_lootBonus(),
+			Rarity::RARE,
+			0,
+			0,
+			3,
+			fn(int $level) : int => 9 * ($level - 1) + 15,
+			50
+		));
+		self::register("LUNGE", new Enchantment(
+			"Lunge",
+			Rarity::UNCOMMON,
+			0,
+			0,
+			3,
+			fn(int $level) : int => 10 * ($level - 1) + 12,
+			25
+		));
 
 		self::register("EFFICIENCY", new Enchantment(
 			KnownTranslationFactory::enchantment_digging(),

@@ -127,6 +127,20 @@ chunk-generation:
   #Max. amount of chunks in the waiting queue to be populated
   population-queue-size: 32
 
+hopper:
+  # Delay in ticks between hopper transfer attempts.
+  transferCooldown: 16
+  # Maximum number of items a hopper can move per update.
+  itemsPerUpdate: 64
+  # Maximum number of hopper block updates scheduled for the same tick. Set to 0 or less to disable throttling.
+  updatesPerTick: 75
+
+item:
+  # Maximum lifetime of dropped items in seconds. Set to 0 to keep vanilla/item-default timing.
+  despawnSeconds: 60
+  # Soft limit for dropped item entities per world. Oldest-to-despawn items are cleaned first when exceeded.
+  maxPerWorld: 200
+
 ticks-per:
   autosave: 6000
 

@@ -23,7 +23,9 @@ declare(strict_types=1);
 
 namespace pocketmine\world;
 
+use pocketmine\block\utils\HopperDataStore;
 use pocketmine\entity\Entity;
+use pocketmine\entity\object\ItemEntity;
 use pocketmine\event\world\WorldInitEvent;
 use pocketmine\event\world\WorldLoadEvent;
 use pocketmine\event\world\WorldUnloadEvent;
@@ -161,6 +163,9 @@ class WorldManager{
 		unset($this->worlds[$world->getId()]);
 
 		$world->onUnload();
+		HopperDataStore::getInstance()->removeWorld($world);
+		ItemEntity::removeWorld($world);
+		ItemEntity::clearColumnCacheForWorld($world);
 		return true;
 	}
 

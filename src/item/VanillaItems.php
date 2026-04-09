@@ -1,22 +1,22 @@
 <?php
 
 /*
- *
- *  ____            _        _   __  __ _                  __  __ ____
- * |  _ \ ___   ___| | _____| |_|  \/  (_)_ __   ___      |  \/  |  _ \
- * | |_) / _ \ / __| |/ / _ \ __| |\/| | | '_ \ / _ \_____| |\/| | |_) |
- * |  __/ (_) | (__|   <  __/ |_| |  | | | | | |  __/_____| |  | |  __/
- * |_|   \___/ \___|_|\_\___|\__|_|  |_|_|_| |_|\___|     |_|  |_|_|
+ *     ____            ____        __  ____
+ *    / __ )___  ___  / / /___  __/  |/  (_)___  ___
+ *   / __  / _ \/ _ \/ / __/ / / / /|_/ / / __ \/ _ \
+ *  / /_/ /  __/  __/ / /_/ /_/ / /  / / / / / /  __/
+ * /_____/\___/\___/_/\__/\__, /_/  /_/_/_/ /_/\___/
+ *                       /____/
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * @author PocketMine Team
- * @link http://www.pocketmine.net/
- *
- *
+ * @author Ayrz
+ * @team BeeltyMine
+ * 
+ * 
  */
 
 declare(strict_types=1);
@@ -25,6 +25,7 @@ namespace pocketmine\item;
 
 use pocketmine\block\utils\RecordType;
 use pocketmine\block\VanillaBlocks as Blocks;
+use pocketmine\entity\Bee;
 use pocketmine\entity\Entity;
 use pocketmine\entity\Location;
 use pocketmine\entity\Squid;
@@ -59,6 +60,7 @@ use function strtolower;
  * @method static HangingSign BAMBOO_HANGING_SIGN()
  * @method static ItemBlockWallOrFloor BAMBOO_SIGN()
  * @method static Banner BANNER()
+ * @method static SpawnEgg BEE_SPAWN_EGG()
  * @method static Beetroot BEETROOT()
  * @method static BeetrootSeeds BEETROOT_SEEDS()
  * @method static BeetrootSoup BEETROOT_SOUP()
@@ -76,6 +78,23 @@ use function strtolower;
  * @method static Bread BREAD()
  * @method static Item BRICK()
  * @method static Bucket BUCKET()
+ * @method static Bundle BUNDLE()
+ * @method static Bundle WHITE_BUNDLE()
+ * @method static Bundle LIGHT_GRAY_BUNDLE()
+ * @method static Bundle GRAY_BUNDLE()
+ * @method static Bundle BLACK_BUNDLE()
+ * @method static Bundle BROWN_BUNDLE()
+ * @method static Bundle RED_BUNDLE()
+ * @method static Bundle ORANGE_BUNDLE()
+ * @method static Bundle YELLOW_BUNDLE()
+ * @method static Bundle LIME_BUNDLE()
+ * @method static Bundle GREEN_BUNDLE()
+ * @method static Bundle CYAN_BUNDLE()
+ * @method static Bundle LIGHT_BLUE_BUNDLE()
+ * @method static Bundle BLUE_BUNDLE()
+ * @method static Bundle PURPLE_BUNDLE()
+ * @method static Bundle MAGENTA_BUNDLE()
+ * @method static Bundle PINK_BUNDLE()
  * @method static Carrot CARROT()
  * @method static Armor CHAINMAIL_BOOTS()
  * @method static Armor CHAINMAIL_CHESTPLATE()
@@ -146,6 +165,7 @@ use function strtolower;
  * @method static Armor COPPER_LEGGINGS()
  * @method static Item COPPER_NUGGET()
  * @method static Pickaxe COPPER_PICKAXE()
+ * @method static Spear COPPER_SPEAR()
  * @method static Shovel COPPER_SHOVEL()
  * @method static Sword COPPER_SWORD()
  * @method static CoralFan CORAL_FAN()
@@ -162,6 +182,7 @@ use function strtolower;
  * @method static Hoe DIAMOND_HOE()
  * @method static Armor DIAMOND_LEGGINGS()
  * @method static Pickaxe DIAMOND_PICKAXE()
+ * @method static Spear DIAMOND_SPEAR()
  * @method static Shovel DIAMOND_SHOVEL()
  * @method static Sword DIAMOND_SWORD()
  * @method static Item DISC_FRAGMENT_5()
@@ -203,6 +224,7 @@ use function strtolower;
  * @method static Hoe GOLDEN_HOE()
  * @method static Armor GOLDEN_LEGGINGS()
  * @method static Pickaxe GOLDEN_PICKAXE()
+ * @method static Spear GOLDEN_SPEAR()
  * @method static Shovel GOLDEN_SHOVEL()
  * @method static Sword GOLDEN_SWORD()
  * @method static Item GOLD_INGOT()
@@ -223,6 +245,7 @@ use function strtolower;
  * @method static Armor IRON_LEGGINGS()
  * @method static Item IRON_NUGGET()
  * @method static Pickaxe IRON_PICKAXE()
+ * @method static Spear IRON_SPEAR()
  * @method static Shovel IRON_SHOVEL()
  * @method static Sword IRON_SWORD()
  * @method static Boat JUNGLE_BOAT()
@@ -256,6 +279,7 @@ use function strtolower;
  * @method static Item NETHERITE_INGOT()
  * @method static Armor NETHERITE_LEGGINGS()
  * @method static Pickaxe NETHERITE_PICKAXE()
+ * @method static Spear NETHERITE_SPEAR()
  * @method static Item NETHERITE_SCRAP()
  * @method static Shovel NETHERITE_SHOVEL()
  * @method static Sword NETHERITE_SWORD()
@@ -277,6 +301,7 @@ use function strtolower;
  * @method static Item POPPED_CHORUS_FRUIT()
  * @method static Potato POTATO()
  * @method static Potion POTION()
+ * @method static PowderSnowBucket POWDER_SNOW_BUCKET()
  * @method static Item PRISMARINE_CRYSTALS()
  * @method static Item PRISMARINE_SHARD()
  * @method static Pufferfish PUFFERFISH()
@@ -343,6 +368,7 @@ use function strtolower;
  * @method static Axe STONE_AXE()
  * @method static Hoe STONE_HOE()
  * @method static Pickaxe STONE_PICKAXE()
+ * @method static Spear STONE_SPEAR()
  * @method static Shovel STONE_SHOVEL()
  * @method static Sword STONE_SWORD()
  * @method static StringItem STRING()
@@ -367,6 +393,7 @@ use function strtolower;
  * @method static Axe WOODEN_AXE()
  * @method static Hoe WOODEN_HOE()
  * @method static Pickaxe WOODEN_PICKAXE()
+ * @method static Spear WOODEN_SPEAR()
  * @method static Shovel WOODEN_SHOVEL()
  * @method static Sword WOODEN_SWORD()
  * @method static WritableBook WRITABLE_BOOK()
@@ -452,6 +479,23 @@ final class VanillaItems{
 		self::register("bread", fn(IID $id) => new Bread($id, "Bread"));
 		self::register("brick", fn(IID $id) => new Item($id, "Brick"));
 		self::register("bucket", fn(IID $id) => new Bucket($id, "Bucket"));
+		self::register("bundle", fn(IID $id) => new Bundle($id, "Bundle"));
+		self::register("white_bundle", fn(IID $id) => new Bundle($id, "White Bundle"));
+		self::register("light_gray_bundle", fn(IID $id) => new Bundle($id, "Light Gray Bundle"));
+		self::register("gray_bundle", fn(IID $id) => new Bundle($id, "Gray Bundle"));
+		self::register("black_bundle", fn(IID $id) => new Bundle($id, "Black Bundle"));
+		self::register("brown_bundle", fn(IID $id) => new Bundle($id, "Brown Bundle"));
+		self::register("red_bundle", fn(IID $id) => new Bundle($id, "Red Bundle"));
+		self::register("orange_bundle", fn(IID $id) => new Bundle($id, "Orange Bundle"));
+		self::register("yellow_bundle", fn(IID $id) => new Bundle($id, "Yellow Bundle"));
+		self::register("lime_bundle", fn(IID $id) => new Bundle($id, "Lime Bundle"));
+		self::register("green_bundle", fn(IID $id) => new Bundle($id, "Green Bundle"));
+		self::register("cyan_bundle", fn(IID $id) => new Bundle($id, "Cyan Bundle"));
+		self::register("light_blue_bundle", fn(IID $id) => new Bundle($id, "Light Blue Bundle"));
+		self::register("blue_bundle", fn(IID $id) => new Bundle($id, "Blue Bundle"));
+		self::register("purple_bundle", fn(IID $id) => new Bundle($id, "Purple Bundle"));
+		self::register("magenta_bundle", fn(IID $id) => new Bundle($id, "Magenta Bundle"));
+		self::register("pink_bundle", fn(IID $id) => new Bundle($id, "Pink Bundle"));
 		self::register("carrot", fn(IID $id) => new Carrot($id, "Carrot"));
 		self::register("charcoal", fn(IID $id) => new Coal($id, "Charcoal"));
 		self::register("cherry_sign", fn(IID $id) => new ItemBlockWallOrFloor($id, Blocks::CHERRY_SIGN(), Blocks::CHERRY_WALL_SIGN()));
@@ -595,6 +639,7 @@ final class VanillaItems{
 		self::register("popped_chorus_fruit", fn(IID $id) => new Item($id, "Popped Chorus Fruit"));
 		self::register("potato", fn(IID $id) => new Potato($id, "Potato"));
 		self::register("potion", fn(IID $id) => new Potion($id, "Potion"));
+		self::register("powder_snow_bucket", fn(IID $id) => new PowderSnowBucket($id, "Powder Snow Bucket"));
 		self::register("prismarine_crystals", fn(IID $id) => new Item($id, "Prismarine Crystals"));
 		self::register("prismarine_shard", fn(IID $id) => new Item($id, "Prismarine Shard"));
 		self::register("pufferfish", fn(IID $id) => new Pufferfish($id, "Pufferfish"));
@@ -676,6 +721,11 @@ final class VanillaItems{
 				return new Zombie(Location::fromObject($pos, $world, $yaw, $pitch));
 			}
 		});
+		self::register("bee_spawn_egg", fn(IID $id) => new class($id, "Bee Spawn Egg") extends SpawnEgg{
+			protected function createEntity(World $world, Vector3 $pos, float $yaw, float $pitch) : Entity{
+				return new Bee(Location::fromObject($pos, $world, $yaw, $pitch));
+			}
+		});
 		self::register("squid_spawn_egg", fn(IID $id) => new class($id, "Squid Spawn Egg") extends SpawnEgg{
 			protected function createEntity(World $world, Vector3 $pos, float $yaw, float $pitch) : Entity{
 				return new Squid(Location::fromObject($pos, $world, $yaw, $pitch));
@@ -703,6 +753,7 @@ final class VanillaItems{
 			self::register($idPrefix . "_pickaxe", fn(IID $id) => new Pickaxe($id, $namePrefix . " Pickaxe", $tier, [EnchantmentTags::PICKAXE]));
 			self::register($idPrefix . "_shovel", fn(IID $id) => new Shovel($id, $namePrefix . " Shovel", $tier, [EnchantmentTags::SHOVEL]));
 			self::register($idPrefix . "_sword", fn(IID $id) => new Sword($id, $namePrefix . " Sword", $tier, [EnchantmentTags::SWORD]));
+			self::register($idPrefix . "_spear", fn(IID $id) => new Spear($id, $namePrefix . " Spear", $tier, [EnchantmentTags::SPEAR]));
 		}
 	}
 

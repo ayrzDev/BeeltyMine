@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace pocketmine\inventory\transaction;
 
+use pocketmine\block\utils\HopperRuntime;
 use pocketmine\event\inventory\InventoryTransactionEvent;
 use pocketmine\inventory\Inventory;
 use pocketmine\inventory\transaction\action\InventoryAction;
@@ -313,6 +314,7 @@ class InventoryTransaction{
 		}
 
 		$this->hasExecuted = true;
+		HopperRuntime::getInstance()->scheduleHoppersForInventories($this->inventories);
 	}
 
 	public function hasExecuted() : bool{

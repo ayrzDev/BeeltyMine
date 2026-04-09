@@ -38,7 +38,6 @@ use pocketmine\network\mcpe\protocol\MobEquipmentPacket;
 use pocketmine\network\mcpe\protocol\RemoveActorPacket;
 use pocketmine\network\mcpe\protocol\SetActorDataPacket;
 use pocketmine\network\mcpe\protocol\TakeItemActorPacket;
-use pocketmine\network\mcpe\protocol\types\entity\PropertySyncData;
 use pocketmine\network\mcpe\protocol\types\entity\UpdateAttribute;
 use pocketmine\network\mcpe\protocol\types\inventory\ContainerIds;
 use pocketmine\network\mcpe\protocol\types\inventory\ItemStack;
@@ -77,7 +76,7 @@ final class StandardEntityEventBroadcaster implements EntityEventBroadcaster{
 		//TODO: HACK! as of 1.18.10, the client responds differently to the same data ordered in different orders - for
 		//example, sending HEIGHT in the list before FLAGS when unsetting the SWIMMING flag results in a hitbox glitch
 		ksort($properties, SORT_NUMERIC);
-		$this->sendDataPacket($recipients, SetActorDataPacket::create($entity->getId(), $properties, new PropertySyncData([], []), 0));
+		$this->sendDataPacket($recipients, SetActorDataPacket::create($entity->getId(), $properties, $entity->getPropertySyncData(), 0));
 	}
 
 	public function onEntityEffectAdded(array $recipients, Living $entity, EffectInstance $effect, bool $replacesOldEffect) : void{

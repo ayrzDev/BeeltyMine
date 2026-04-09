@@ -40,12 +40,18 @@ class Zombie extends Living{
 		return "Zombie";
 	}
 
+	public function isUndead() : bool{
+		return true;
+	}
+
 	public function getDrops() : array{
+		$looting = $this->getLootingLevelForDrops();
+
 		$drops = [
-			VanillaItems::ROTTEN_FLESH()->setCount(mt_rand(0, 2))
+			VanillaItems::ROTTEN_FLESH()->setCount(mt_rand(0, 2 + $looting))
 		];
 
-		if(mt_rand(0, 199) < 5){
+		if(mt_rand(0, 199) < (5 + $looting * 5)){
 			switch(mt_rand(0, 2)){
 				case 0:
 					$drops[] = VanillaItems::IRON_INGOT();

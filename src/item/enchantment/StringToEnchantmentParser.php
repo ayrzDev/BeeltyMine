@@ -55,6 +55,10 @@ final class StringToEnchantmentParser extends StringToTParser{
 		$result->register("respiration", fn() => VanillaEnchantments::RESPIRATION());
 		$result->register("aqua_affinity", fn() => VanillaEnchantments::AQUA_AFFINITY());
 		$result->register("sharpness", fn() => VanillaEnchantments::SHARPNESS());
+		$result->register("smite", fn() => VanillaEnchantments::SMITE());
+		$result->register("bane_of_arthropods", fn() => VanillaEnchantments::BANE_OF_ARTHROPODS());
+		$result->register("looting", fn() => VanillaEnchantments::LOOTING());
+		$result->register("lunge", fn() => VanillaEnchantments::LUNGE());
 		$result->register("silk_touch", fn() => VanillaEnchantments::SILK_TOUCH());
 		$result->register("swift_sneak", fn() => VanillaEnchantments::SWIFT_SNEAK());
 		$result->register("thorns", fn() => VanillaEnchantments::THORNS());

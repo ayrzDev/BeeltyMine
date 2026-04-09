@@ -1,22 +1,22 @@
 <?php
 
 /*
- *
- *  ____            _        _   __  __ _                  __  __ ____
- * |  _ \ ___   ___| | _____| |_|  \/  (_)_ __   ___      |  \/  |  _ \
- * | |_) / _ \ / __| |/ / _ \ __| |\/| | | '_ \ / _ \_____| |\/| | |_) |
- * |  __/ (_) | (__|   <  __/ |_| |  | | | | | |  __/_____| |  | |  __/
- * |_|   \___/ \___|_|\_\___|\__|_|  |_|_|_| |_|\___|     |_|  |_|_|
+ *     ____            ____        __  ____
+ *    / __ )___  ___  / / /___  __/  |/  (_)___  ___
+ *   / __  / _ \/ _ \/ / __/ / / / /|_/ / / __ \/ _ \
+ *  / /_/ /  __/  __/ / /_/ /_/ / /  / / / / / /  __/
+ * /_____/\___/\___/_/\__/\__, /_/  /_/_/_/ /_/\___/
+ *                       /____/
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * @author PocketMine Team
- * @link http://www.pocketmine.net/
- *
- *
+ * @author Ayrz
+ * @team BeeltyMine
+ * 
+ * 
  */
 
 declare(strict_types=1);
@@ -41,7 +41,10 @@ $options = [
 	"is_dev" => VersionInfo::IS_DEVELOPMENT_BUILD,
 	"changelog_file_name" => function() : string{
 		$version = VersionInfo::VERSION();
-		$result = $version->getMajor() . "." . $version->getMinor();
+		$candidates = [];
+		$candidates[] = VersionInfo::BASE_VERSION . ".md";
+		$candidates[] = $version->getMajor() . "." . $version->getMinor() . ".md";
+
 		$suffix = $version->getSuffix();
 		if($suffix !== ""){
 			if(preg_match('/^([A-Za-z]+)(\d+)$/', $suffix, $matches) !== 1){
@@ -49,9 +52,16 @@ $options = [
 				exit(1);
 			}
 			$baseSuffix = $matches[1];
-			$result .= "-" . strtolower($baseSuffix);
+			$candidates[] = $version->getMajor() . "." . $version->getMinor() . "-" . strtolower($baseSuffix) . ".md";
 		}
-		return $result . ".md";
+
+		foreach($candidates as $candidate){
+			if(file_exists(dirname(__DIR__) . "/changelogs/" . $candidate)){
+				return $candidate;
+			}
+		}
+
+		return $candidates[0];
 	},
 	"changelog_md_header" => fn() : string => str_replace(".", "", VersionInfo::BASE_VERSION),
 	"prerelease" => fn() : bool => VersionInfo::VERSION()->getSuffix() !== "",

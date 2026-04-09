@@ -52,6 +52,7 @@ final class ItemEnchantmentTagRegistry{
 		$this->register(Tags::ARMOR, [Tags::HELMET, Tags::CHESTPLATE, Tags::LEGGINGS, Tags::BOOTS]);
 		$this->register(Tags::SHIELD);
 		$this->register(Tags::SWORD);
+		$this->register(Tags::SPEAR);
 		$this->register(Tags::TRIDENT);
 		$this->register(Tags::BOW);
 		$this->register(Tags::CROSSBOW);
@@ -66,6 +67,7 @@ final class ItemEnchantmentTagRegistry{
 		$this->register(Tags::BRUSH);
 		$this->register(Tags::WEAPONS, [
 			Tags::SWORD,
+			Tags::SPEAR,
 			Tags::TRIDENT,
 			Tags::BOW,
 			Tags::CROSSBOW,

@@ -25,6 +25,7 @@ namespace pocketmine\block\tile;
 
 use pocketmine\block\Furnace as BlockFurnace;
 use pocketmine\block\inventory\FurnaceInventory;
+use pocketmine\block\utils\HopperRuntime;
 use pocketmine\crafting\FurnaceRecipe;
 use pocketmine\crafting\FurnaceType;
 use pocketmine\event\inventory\FurnaceBurnEvent;
@@ -32,6 +33,7 @@ use pocketmine\event\inventory\FurnaceSmeltEvent;
 use pocketmine\inventory\CallbackInventoryListener;
 use pocketmine\inventory\Inventory;
 use pocketmine\item\Item;
+use pocketmine\math\Facing;
 use pocketmine\math\Vector3;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\network\mcpe\protocol\ContainerSetDataPacket;
@@ -125,6 +127,8 @@ abstract class Furnace extends Spawnable implements Container, Nameable{
 		if($this->remainingFuelTime > 0 && $ev->isBurning()){
 			$this->inventory->setFuel($fuel->getFuelResidue());
 		}
+
+		HopperRuntime::getInstance()->scheduleHoppersAround($this->position, [Facing::DOWN, Facing::NORTH, Facing::SOUTH, Facing::WEST, Facing::EAST]);
 	}
 
 	protected function onStartSmelting() : void{
@@ -187,6 +191,7 @@ abstract class Furnace extends Spawnable implements Container, Nameable{
 						$this->inventory->setResult($ev->getResult());
 						$raw->pop();
 						$this->inventory->setSmelting($raw);
+						HopperRuntime::getInstance()->scheduleHoppersAround($this->position, [Facing::DOWN, Facing::UP]);
 					}
 
 					$this->cookTime -= $furnaceType->getCookDurationTicks();

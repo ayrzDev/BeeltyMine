@@ -2,21 +2,22 @@
 
 /*
  *
- *  ____            _        _   __  __ _                  __  __ ____
- * |  _ \ ___   ___| | _____| |_|  \/  (_)_ __   ___      |  \/  |  _ \
- * | |_) / _ \ / __| |/ / _ \ __| |\/| | | '_ \ / _ \_____| |\/| | |_) |
- * |  __/ (_) | (__|   <  __/ |_| |  | | | | | |  __/_____| |  | |  __/
- * |_|   \___/ \___|_|\_\___|\__|_|  |_|_|_| |_|\___|     |_|  |_|_|
+ *     ____            ____        __  ____
+ *    / __ )___  ___  / / /___  __/  |/  (_)___  ___
+ *   / __  / _ \/ _ \/ / __/ / / / /|_/ / / __ \/ _ \
+ *  / /_/ /  __/  __/ / /_/ /_/ / /  / / / / / /  __/
+ * /_____/\___/\___/_/\__/\__, /_/  /_/_/_/ /_/\___/
+ *                       /____/
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * @author PocketMine Team
- * @link http://www.pocketmine.net/
- *
- *
+ * @author Ayrz
+ * @team BeeltyMine
+ * 
+ * 
  */
 
 declare(strict_types=1);
@@ -54,6 +55,10 @@ final class TransactionBuilderInventory extends BaseInventory{
 		return $this->actualInventory;
 	}
 
+	protected function shouldCallInventoryAwareItemHooks() : bool{
+		return false;
+	}
+
 	protected function internalSetContents(array $items) : void{
 		for($i = 0, $size = $this->getSize(); $i < $size; ++$i){
 			if(!isset($items[$i])){
@@ -78,6 +83,14 @@ final class TransactionBuilderInventory extends BaseInventory{
 
 	public function getItem(int $index) : Item{
 		return $this->changedSlots[$index] !== null ? clone $this->changedSlots[$index] : $this->actualInventory->getItem($index);
+	}
+
+	public function getUnclonedItem(int $index) : Item{
+		if($this->changedSlots[$index] !== null){
+			return $this->changedSlots[$index];
+		}
+
+		return $this->actualInventory instanceof BaseInventory ? $this->actualInventory->getUnclonedItem($index) : $this->actualInventory->getItem($index);
 	}
 
 	public function getContents(bool $includeEmpty = false) : array{

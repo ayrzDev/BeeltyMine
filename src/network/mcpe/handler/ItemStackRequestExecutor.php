@@ -2,21 +2,22 @@
 
 /*
  *
- *  ____            _        _   __  __ _                  __  __ ____
- * |  _ \ ___   ___| | _____| |_|  \/  (_)_ __   ___      |  \/  |  _ \
- * | |_) / _ \ / __| |/ / _ \ __| |\/| | | '_ \ / _ \_____| |\/| | |_) |
- * |  __/ (_) | (__|   <  __/ |_| |  | | | | | |  __/_____| |  | |  __/
- * |_|   \___/ \___|_|\_\___|\__|_|  |_|_|_| |_|\___|     |_|  |_|_|
+ *     ____            ____        __  ____
+ *    / __ )___  ___  / / /___  __/  |/  (_)___  ___
+ *   / __  / _ \/ _ \/ / __/ / / / /|_/ / / __ \/ _ \
+ *  / /_/ /  __/  __/ / /_/ /_/ / /  / / / / / /  __/
+ * /_____/\___/\___/_/\__/\__, /_/  /_/_/_/ /_/\___/
+ *                       /____/
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * @author PocketMine Team
- * @link http://www.pocketmine.net/
- *
- *
+ * @author Ayrz
+ * @team BeeltyMine
+ * 
+ * 
  */
 
 declare(strict_types=1);
@@ -62,7 +63,6 @@ use pocketmine\network\mcpe\protocol\types\inventory\stackrequest\TakeStackReque
 use pocketmine\network\mcpe\protocol\types\inventory\stackresponse\ItemStackResponse;
 use pocketmine\network\mcpe\protocol\types\inventory\UIInventorySlotOffset;
 use pocketmine\player\Player;
-use pocketmine\utils\AssumptionFailedError;
 use pocketmine\utils\Utils;
 use function array_key_first;
 use function count;
@@ -83,6 +83,9 @@ class ItemStackRequestExecutor{
 	private bool $createdItemFromCreativeInventory = false;
 	private int $createdItemsTakenCount = 0;
 	private bool $beaconPaymentConsumedInRequest = false;
+	private bool $bundleInsertRequested = false;
+	private bool $bundleInsertSound = false;
+	private bool $bundleRemoveSound = false;
 
 	public function __construct(
 		private Player $player,
@@ -103,9 +106,13 @@ class ItemStackRequestExecutor{
 	 * @throws ItemStackRequestProcessException
 	 */
 	private function matchItemStack(Inventory $inventory, int $slotId, int $clientItemStackId) : void{
-		$info = $this->inventoryManager->getItemStackInfo($inventory, $slotId);
+		$info = $clientItemStackId >= 0 ?
+			$this->inventoryManager->getOrCreateItemStackInfo($inventory, $slotId, $clientItemStackId) :
+			$this->inventoryManager->getItemStackInfo($inventory, $slotId);
 		if($info === null){
-			throw new AssumptionFailedError("The inventory is tracked and the slot is valid, so this should not be null");
+			throw new ItemStackRequestProcessException(
+				$this->prettyInventoryAndSlot($inventory, $slotId) . ": No tracked itemstack info is available for this slot"
+			);
 		}
 
 		if(!($clientItemStackId < 0 ? $info->getRequestId() === $clientItemStackId : $info->getStackId() === $clientItemStackId)){
@@ -123,10 +130,19 @@ class ItemStackRequestExecutor{
 	 * @throws ItemStackRequestProcessException
 	 */
 	protected function getBuilderInventoryAndSlot(ItemStackRequestSlotInfo $info) : array{
-		[$windowId, $slotId] = ItemStackContainerIdTranslator::translate($info->getContainerName()->getContainerId(), $this->inventoryManager->getCurrentWindowId(), $info->getSlotId());
-		$windowAndSlot = $this->inventoryManager->locateWindowAndSlot($windowId, $slotId);
+		$containerName = $info->getContainerName();
+		if($containerName->getContainerId() === ContainerUIIds::DYNAMIC){
+			$dynamicId = $containerName->getDynamicId();
+			if($dynamicId === null){
+				throw new ItemStackRequestProcessException("Dynamic container request did not include a dynamic container ID");
+			}
+			$windowAndSlot = $this->inventoryManager->locateDynamicInventoryAndSlot($dynamicId, $info->getSlotId());
+		}else{
+			[$windowId, $slotId] = ItemStackContainerIdTranslator::translate($containerName->getContainerId(), $this->inventoryManager->getCurrentWindowId(), $info->getSlotId());
+			$windowAndSlot = $this->inventoryManager->locateWindowAndSlot($windowId, $slotId);
+		}
 		if($windowAndSlot === null){
-			throw new ItemStackRequestProcessException("No open inventory matches container UI ID: " . $info->getContainerName()->getContainerId() . ", slot ID: " . $info->getSlotId());
+			throw new ItemStackRequestProcessException("No open inventory matches container UI ID: " . $containerName->getContainerId() . ", slot ID: " . $info->getSlotId());
 		}
 		[$inventory, $slot] = $windowAndSlot;
 		if(!$inventory->slotExists($slot)){
@@ -146,6 +162,24 @@ class ItemStackRequestExecutor{
 	protected function transferItems(ItemStackRequestSlotInfo $source, ItemStackRequestSlotInfo $destination, int $count) : void{
 		$removed = $this->removeItemFromSlot($source, $count);
 		$this->addItemToSlot($destination, $removed, $count);
+		$this->trackBundleTransfer($source, $destination);
+	}
+
+	private function isDynamicContainer(ItemStackRequestSlotInfo $slotInfo) : bool{
+		return $slotInfo->getContainerName()->getContainerId() === ContainerUIIds::DYNAMIC;
+	}
+
+	private function trackBundleTransfer(ItemStackRequestSlotInfo $source, ItemStackRequestSlotInfo $destination) : void{
+		$sourceDynamic = $this->isDynamicContainer($source);
+		$destinationDynamic = $this->isDynamicContainer($destination);
+
+		if($destinationDynamic){
+			$this->bundleInsertRequested = true;
+			$this->bundleInsertSound = true;
+		}
+		if($sourceDynamic){
+			$this->bundleRemoveSound = true;
+		}
 	}
 
 	/**
@@ -359,6 +393,8 @@ class ItemStackRequestExecutor{
 			$item2 = $inventory2->getItem($slot2);
 			$inventory1->setItem($slot1, $item2);
 			$inventory2->setItem($slot2, $item1);
+			$this->trackBundleTransfer($action->getSlot1(), $action->getSlot2());
+			$this->trackBundleTransfer($action->getSlot2(), $action->getSlot1());
 		}elseif($action instanceof DropStackRequestAction){
 			//TODO: this action has a "randomly" field, I have no idea what it's used for
 			$dropped = $this->removeItemFromSlot($action->getSource(), $action->getCount());
@@ -472,7 +508,7 @@ class ItemStackRequestExecutor{
 	public function getItemStackResponseBuilder() : ItemStackResponseBuilder{
 		$builder = new ItemStackResponseBuilder($this->request->getRequestId(), $this->inventoryManager);
 		foreach($this->requestSlotInfos as $requestInfo){
-			$builder->addSlot($requestInfo->getContainerName()->getContainerId(), $requestInfo->getSlotId());
+			$builder->addSlot($requestInfo->getContainerName(), $requestInfo->getSlotId());
 		}
 
 		return $builder;
@@ -480,5 +516,17 @@ class ItemStackRequestExecutor{
 
 	public function buildItemStackResponse() : ItemStackResponse{
 		return $this->getItemStackResponseBuilder()->build();
+	}
+
+	public function hasBundleInsertRequest() : bool{
+		return $this->bundleInsertRequested;
+	}
+
+	public function shouldPlayBundleInsertSound() : bool{
+		return $this->bundleInsertSound;
+	}
+
+	public function shouldPlayBundleRemoveSound() : bool{
+		return $this->bundleRemoveSound;
 	}
 }

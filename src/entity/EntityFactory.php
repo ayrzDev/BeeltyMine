@@ -195,6 +195,10 @@ final class EntityFactory{
 			'ThrownTrident' //as above
 		]);
 
+		$this->register(Bee::class, function(World $world, CompoundTag $nbt) : Bee{
+			return new Bee(Helper::parseLocation($nbt, $world), $nbt);
+		}, ['Bee', 'minecraft:bee']);
+
 		$this->register(Squid::class, function(World $world, CompoundTag $nbt) : Squid{
 			return new Squid(Helper::parseLocation($nbt, $world), $nbt);
 		}, ['Squid', 'minecraft:squid']);

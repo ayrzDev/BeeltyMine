@@ -32,6 +32,7 @@ use pocketmine\block\tile\Banner as TileBanner;
 use pocketmine\block\tile\Barrel as TileBarrel;
 use pocketmine\block\tile\Beacon as TileBeacon;
 use pocketmine\block\tile\Bed as TileBed;
+use pocketmine\block\tile\Beehive as TileBeehive;
 use pocketmine\block\tile\Bell as TileBell;
 use pocketmine\block\tile\BlastFurnace as TileBlastFurnace;
 use pocketmine\block\tile\BrewingStand as TileBrewingStand;
@@ -40,6 +41,7 @@ use pocketmine\block\tile\Cauldron as TileCauldron;
 use pocketmine\block\tile\Chest as TileChest;
 use pocketmine\block\tile\ChiseledBookshelf as TileChiseledBookshelf;
 use pocketmine\block\tile\Comparator as TileComparator;
+use pocketmine\block\tile\CopperGolemStatue as TileCopperGolemStatue;
 use pocketmine\block\tile\DaylightSensor as TileDaylightSensor;
 use pocketmine\block\tile\EnchantTable as TileEnchantingTable;
 use pocketmine\block\tile\EnderChest as TileEnderChest;
@@ -376,6 +378,7 @@ final class VanillaBlocksInputs extends RegistrySource{
 		self::register("slime", fn(BID $id) => new Slime($id, "Slime Block", new Info(BreakInfo::instant())));
 		self::register("snow", fn(BID $id) => new Snow($id, "Snow Block", new Info(BreakInfo::shovel(0.2, ToolTier::WOOD))));
 		self::register("snow_layer", fn(BID $id) => new SnowLayer($id, "Snow Layer", new Info(BreakInfo::shovel(0.1, ToolTier::WOOD))));
+		self::register("powder_snow", fn(BID $id) => new PowderSnow($id, "Powder Snow", new Info(BreakInfo::shovel(0.25, ToolTier::WOOD))));
 		self::register("soul_sand", fn(BID $id) => new SoulSand($id, "Soul Sand", new Info(BreakInfo::shovel(0.5))));
 		self::register("sponge", fn(BID $id) => new Sponge($id, "Sponge", new Info(new BreakInfo(0.6, ToolType::HOE))));
 		$shulkerBoxBreakInfo = new Info(BreakInfo::pickaxe(2));
@@ -617,8 +620,8 @@ final class VanillaBlocksInputs extends RegistrySource{
 		self::register("pale_hanging_moss", fn(BID $id) => new PaleHangingMoss($id, "Pale Hanging Moss", new Info(BreakInfo::instant())));
 		self::register("pale_moss_block", fn(BID $id) => new PaleMossBlock($id, "Pale Moss Block", new Info(new BreakInfo(0.1, ToolType::HOE), [Tags::MOSS])));
 		self::register("pale_moss_carpet", fn(BID $id) => new PaleMossCarpet($id, "Pale Moss Carpet", new Info(new BreakInfo(0.1, ToolType::HOE))));
-		self::register("bee_nest", fn(BID $id) => new BeeNest($id, "Bee Nest", new Info(BreakInfo::axe(0.3))));
-		self::register("beehive", fn(BID $id) => new Beehive($id, "Beehive", new Info(BreakInfo::axe(0.6))));
+		self::register("bee_nest", fn(BID $id) => new BeeNest($id, "Bee Nest", new Info(BreakInfo::axe(0.3))), TileBeehive::class);
+		self::register("beehive", fn(BID $id) => new Beehive($id, "Beehive", new Info(BreakInfo::axe(0.6))), TileBeehive::class);
 		self::register("dripstone_block", fn(BID $id) => new Opaque($id, "Dripstone Block", new Info(BreakInfo::pickaxe(1.5, ToolTier::WOOD))));
 		self::register("leaf_litter", fn(BID $id) => new LeafLitter($id, "Leaf Litter", new Info(BreakInfo::instant())));
 		self::register("pointed_dripstone", fn(BID $id) => new PointedDripstone($id, "Pointed Dripstone", new Info(BreakInfo::pickaxe(1.5, ToolTier::WOOD))));
@@ -1069,6 +1072,14 @@ final class VanillaBlocksInputs extends RegistrySource{
 		self::register("cut_copper", fn(BID $id) => new Copper($id, "Cut Copper Block", $copperBreakInfo));
 		self::register("cut_copper_slab", fn(BID $id) => new CopperSlab($id, "Cut Copper Slab", $copperBreakInfo));
 		self::register("cut_copper_stairs", fn(BID $id) => new CopperStairs($id, "Cut Copper Stairs", $copperBreakInfo));
+		self::register("copper_golem_statue", fn(BID $id) => new CopperGolemStatue($id, "Copper Golem Statue", $copperBreakInfo), TileCopperGolemStatue::class);
+		self::register("exposed_copper_golem_statue", fn(BID $id) => new CopperGolemStatue($id, "Exposed Copper Golem Statue", $copperBreakInfo), TileCopperGolemStatue::class);
+		self::register("weathered_copper_golem_statue", fn(BID $id) => new CopperGolemStatue($id, "Weathered Copper Golem Statue", $copperBreakInfo), TileCopperGolemStatue::class);
+		self::register("oxidized_copper_golem_statue", fn(BID $id) => new CopperGolemStatue($id, "Oxidized Copper Golem Statue", $copperBreakInfo), TileCopperGolemStatue::class);
+		self::register("waxed_copper_golem_statue", fn(BID $id) => new CopperGolemStatue($id, "Waxed Copper Golem Statue", $copperBreakInfo), TileCopperGolemStatue::class);
+		self::register("waxed_exposed_copper_golem_statue", fn(BID $id) => new CopperGolemStatue($id, "Waxed Exposed Copper Golem Statue", $copperBreakInfo), TileCopperGolemStatue::class);
+		self::register("waxed_weathered_copper_golem_statue", fn(BID $id) => new CopperGolemStatue($id, "Waxed Weathered Copper Golem Statue", $copperBreakInfo), TileCopperGolemStatue::class);
+		self::register("waxed_oxidized_copper_golem_statue", fn(BID $id) => new CopperGolemStatue($id, "Waxed Oxidized Copper Golem Statue", $copperBreakInfo), TileCopperGolemStatue::class);
 		self::register("copper_bulb", fn(BID $id) => new CopperBulb($id, "Copper Bulb", $copperBreakInfo));
 
 		self::register("copper_door", fn(BID $id) => new CopperDoor($id, "Copper Door", new Info(BreakInfo::pickaxe(3.0, blastResistance: 30.0))));
@@ -1148,6 +1159,7 @@ final class VanillaBlocksInputs extends RegistrySource{
 
 		self::register("cauldron", fn(BID $id) => new Cauldron($id, "Cauldron", $cauldronBreakInfo), TileCauldron::class);
 		self::register("water_cauldron", fn(BID $id) => new WaterCauldron($id, "Water Cauldron", $cauldronBreakInfo), TileCauldron::class);
+		self::register("powder_snow_cauldron", fn(BID $id) => new PowderSnowCauldron($id, "Powder Snow Cauldron", $cauldronBreakInfo), TileCauldron::class);
 		self::register("lava_cauldron", fn(BID $id) => new LavaCauldron($id, "Lava Cauldron", $cauldronBreakInfo), TileCauldron::class);
 		self::register("potion_cauldron", fn(BID $id) => new PotionCauldron($id, "Potion Cauldron", $cauldronBreakInfo), TileCauldron::class);
 	}
